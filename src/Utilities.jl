@@ -15,10 +15,9 @@ function easein(x)
     return x^3-x^4/2
 end
 
-function smoothstep(x)
-    x = clamp(x, zero(x), one(x))
-    x * x * (3 - 2x)
-end
+smoothstep(x) = ifelse(x < 0, zero(x), ifelse(x > 1, one(x), x * x * (3 - 2x)))
+smoothstep(x, x0, x1) = smoothstep((x - x0) / (x1 - x0))
+smoothstep(x, x0, x1, y0, y1) = y0 + (y1 - y0) * smoothstep(x, x0, x1)
 
 function numpath(path)
     name, ext = splitext(path)
@@ -78,10 +77,6 @@ const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticks
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, ys) = scatter!(ax, xs, ys, color = :transparent)
-
-smoothstep(x) = ifelse(x < 0, zero(x), ifelse(x > 1, one(x), x * x * (3 - 2x)))
-smoothstep(x, x0, x1) = smoothstep((x - x0) / (x1 - x0))
-smoothstep(x, x0, x1, y0, y1) = y0 + (y1 - y0) * smoothstep(x, x0, x1)
 
 
 function calculate_rgba(rgb1, rgb2, rgba_bg)::RGBAf
