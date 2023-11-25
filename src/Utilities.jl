@@ -12,7 +12,7 @@ REPL.REPLCompletions.latex_symbols["\\angstrom"] = "Å";
 function easein(x)
     x < 0 && return zero(x)
     x > 1 && return x - 0.5
-    return x^3-x^4/2
+    return x * x * x * (1 - x / 2)
 end
 
 smoothstep(x) = ifelse(x < 0, zero(x), ifelse(x > 1, one(x), x * x * (3 - 2x)))
@@ -68,6 +68,8 @@ function theme()
 end
 set_theme!() = Makie.set_theme!(theme())
 
+cam3dfixed!(scene; kwargs...) = cam3d!(scene; zoom_shift_lookat = false, kwargs...)
+const fixcam = (scenekw = (camera = cam3dfixed!,),)
 
 struct IntervalTicks step end
 Makie.get_tickvalues(t::IntervalTicks, vmin, vmax) = ceil(Int, vmin / t.step) * t.step : t.step : floor(Int, vmax / t.step) * t.step
