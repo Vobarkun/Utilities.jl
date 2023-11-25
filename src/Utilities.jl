@@ -57,7 +57,7 @@ end
 
 function theme()
     Theme(
-        resolution = (1000,1000), 
+        size = (1000,1000), 
         Volume = (
             algorithm = :iso, 
             isovalue = 1.0, 
@@ -70,7 +70,7 @@ set_theme!() = Makie.set_theme!(theme())
 
 
 struct IntervalTicks step end
-MakieLayout.get_tickvalues(t::IntervalTicks, vmin, vmax) = ceil(Int, vmin / t.step) * t.step : t.step : floor(Int, vmax / t.step) * t.step
+Makie.get_tickvalues(t::IntervalTicks, vmin, vmax) = ceil(Int, vmin / t.step) * t.step : t.step : floor(Int, vmax / t.step) * t.step
 const xlog10 = (xscale = log10, xticks = LogTicks(IntervalTicks(1)), xminorticksvisible=true, xminorticks = IntervalsBetween(9))
 const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticksvisible=true, yminorticks = IntervalsBetween(9))
 
