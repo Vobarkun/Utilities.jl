@@ -2,12 +2,14 @@ module Utilities
 
 using Makie, IJulia
 
-
 import REPL
-REPL.REPLCompletions.latex_symbols["\\fig"] = "fig = Figure(); ax = Axis(fig[1,1])";
-REPL.REPLCompletions.latex_symbols["\\figls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
-REPL.REPLCompletions.latex_symbols["\\ls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
-REPL.REPLCompletions.latex_symbols["\\angstrom"] = "Å";
+
+function addREPLCompletions()
+    REPL.REPLCompletions.latex_symbols["\\fig"] = "fig = Figure(); ax = Axis(fig[1,1])";
+    REPL.REPLCompletions.latex_symbols["\\figls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
+    REPL.REPLCompletions.latex_symbols["\\ls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
+    REPL.REPLCompletions.latex_symbols["\\angstrom"] = "Å";
+end
 
 function easein(x)
     x < 0 && return zero(x)
@@ -220,6 +222,6 @@ function linkCams!(scenes)
     end
 end
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions
 
 end # module Utils
