@@ -1,6 +1,7 @@
 module Utilities
 
 using Makie, IJulia
+import Makie.SpecApi as S
 
 import REPL
 
@@ -49,12 +50,68 @@ function focus()
 end
 
 function window(figlike, f = true)
-    backend = Makie.current_backend()
-    scene = Makie.get_scene(figlike)
-    Makie.update_state_before_display!(figlike)
-    screen = Makie.getscreen(backend, scene)
-    display(screen, scene)
+    # backend = Makie.current_backend()
+    # scene = Makie.get_scene(figlike)
+    # Makie.update_state_before_display!(figlike)
+    # screen = Makie.getscreen(backend, scene)
+    display(figlike)
     f && focus()
+end
+
+function theme_dark()
+    spinecolor = 1.1parse(Makie.RGB, "#4f5561")
+    Theme(
+        size = (1000,1000), 
+        backgroundcolor = "#282c34",
+        linecolor = "#a8afbc",
+        textcolor = "#a8afbc",
+        Hist = (
+            strokecolor = "#a8afbc",
+        ),
+        palette = (color = Makie.wong_colors() .* 1.5,),
+        Axis = (
+            backgroundcolor = :transparent,
+            bottomspinecolor = spinecolor,
+            leftspinecolor = spinecolor,
+            rightspinecolor = spinecolor,
+            topspinecolor = spinecolor,
+            xgridcolor = "#383e49",
+            xlabelpadding = 3,
+            xminorticksvisible = false,
+            xticksvisible = false,
+            ygridcolor = "#383e49",
+            ylabelpadding = 3,
+            yminorticksvisible = false,
+            yticksvisible = false,
+        ),
+        Axis3 = (
+            xgridcolor = (:white, 0.09),
+            xspinesvisible = false,
+            xticksvisible = false,
+            ygridcolor = (:white, 0.09),
+            yspinesvisible = false,
+            yticksvisible = false,
+            zgridcolor = (:white, 0.09),
+            zspinesvisible = false,
+            zticksvisible = false,
+            backgroundcolor = :gray10,
+        ),
+        Colorbar = (
+            spinewidth = 0,
+            ticklabelpad = 5,
+            ticksvisible = false,
+        ),
+        Legend = (
+            framevisible = false,
+            padding = (0, 0, 0, 0),
+        ),
+        Volume = (
+            algorithm = :iso, 
+            isovalue = 1.0, 
+            isorange = 0.9, 
+            colorrange = (0, 2)
+        ),
+    )
 end
 
 function theme()
@@ -68,7 +125,7 @@ function theme()
         )
     )
 end
-set_theme!() = Makie.set_theme!(theme())
+set_theme!(t = :light; kwargs...) = Makie.set_theme!(t == :dark ? theme_dark() : theme(); kwargs...)
 
 cam3dfixed!(scene; kwargs...) = cam3d!(scene; zoom_shift_lookat = false, kwargs...)
 const fixcam = (scenekw = (camera = cam3dfixed!,),)
@@ -171,6 +228,26 @@ function Makie.convert_arguments(P::Type{<:MultiLines}, yss::AbstractMatrix{<:Re
     (1:size(yss, 1), collect(eachcol(yss)))
 end
 
+# Makie.preferred_axis_type(::MultiVolume) = LScene
+# @recipe(MultiVolume) do scene
+#     Theme()
+# end
+
+# function Makie.plot!(plt::MultiVolume)
+#     println(typeof(plt))
+#     # volume!(plt, plt[1][1])
+#     # plot!(plt, S.LScene(plots = [S.Volume(plt[1])]))
+#     plt
+# end
+
+# function Makie.convert_arguments(P::Type{<:MultiVolume}, vols::Array)
+#     g = S.GridLayout([S.LScene(plots = [S.Volume(v)]) for v in vols])
+#     println(typeof(g))
+#     (g, vols)
+# end
+
+
+# plot!(plt::MultiVolume) = plt
 
 
 linkCameras!(g::GridPosition) = linkCameras!(contents(g))
@@ -209,16 +286,16 @@ function linkCams!(scenes)
                 scene2.camera_controls.fov.val = ep
             end
         end
-        on(scene.camera_controls.zoom_mult) do ep
-            for scene2 in scenes
-                scene2.camera_controls.zoom_mult.val = ep
-            end
-        end
-        on(scene.lights[1].position) do ep
-            for scene2 in scenes
-                scene2.lights[1].position.val = ep
-            end
-        end
+        # on(scene.camera_controls.zoom_mult) do ep
+        #     for scene2 in scenes
+        #         scene2.camera_controls.zoom_mult.val = ep
+        #     end
+        # end
+        # on(scene.lights[1].position) do ep
+        #     for scene2 in scenes
+        #         scene2.lights[1].position.val = ep
+        #     end
+        # end
     end
 end
 
