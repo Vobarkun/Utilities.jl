@@ -67,6 +67,7 @@ function theme_dark()
         textcolor = "#a8afbc",
         Hist = (
             strokecolor = "#a8afbc",
+            strokewidth = 1,
         ),
         palette = (color = Makie.wong_colors() .* 1.5,),
         Axis = (
