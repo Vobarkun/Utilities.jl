@@ -69,6 +69,10 @@ function theme_dark()
             strokecolor = "#a8afbc",
             strokewidth = 1,
         ),
+        BarPlot = (
+            strokecolor = "#a8afbc",
+            strokewidth = 1,
+        ),
         palette = (color = Makie.wong_colors() .* 1.5,),
         Axis = (
             backgroundcolor = :transparent,
@@ -140,6 +144,33 @@ xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, ys) = scatter!(ax, xs, ys, color = :transparent)
 
+struct PseudologTicks ticks end
+Makie.get_tickvalues(t::PseudologTicks, vmin, vmax) = Makie.pseudolog10.inverse.(Makie.get_tickvalues(t.ticks, Makie.pseudolog10(10vmin), Makie.pseudolog10(10vmax)))
+
+struct Pseudolog10Ticks end
+
+function Makie.get_tickvalues(::Pseudolog10Ticks, vmin, vmax)
+    ticks = Makie.pseudolog10.inverse.(ceil(Int, Makie.pseudolog10(10vmin)):1:Makie.pseudolog10(10vmax))
+    ticks .= (ticks .+ sign.(ticks)) ./ 10
+end
+
+function Makie.get_ticklabels(::Pseudolog10Ticks, ticks)
+    map(ticks) do t
+        if t == 0
+            rich("0")
+        # elseif abs(t) == 1
+            # rich(string(round(Int, t)))
+        else
+            rich((t < 0 ? "-" : "") * "10", superscript(string(round(Int, log10(abs(t))))))
+        end
+    end
+end
+
+function Makie.get_ticks(t::Pseudolog10Ticks, scale, tickformat, vmin, vmax)
+    ticks = Makie.get_tickvalues(t, vmin, vmax)
+    ticklabels = Makie.get_ticklabels(t, ticks)
+    ticks, ticklabels    
+end
 
 function calculate_rgba(rgb1, rgb2, rgba_bg)::RGBAf
     rgb1 == rgb2 && return RGBAf(rgb1.r, rgb1.g, rgb1.b, 1)
@@ -192,7 +223,7 @@ function Makie.plot!(sc::MultiLines{<:Tuple{AbstractVector{<:Real}, AbstractVect
         empty!(points[])
         empty!(colors[])
 
-        ts = isa(cs, AbstractArray) ? cs : range(0, 1, length = length(yss))
+        ts = isa(cs, AbstractArray) ? cs : range(0, ifelse(length(yss) > 1, 1, 0), length = length(yss))
 
         for (t, ys) in zip(ts, yss)
             append!(points[], Point2f.(xs, ys))
@@ -300,6 +331,30 @@ function linkCams!(scenes)
     end
 end
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions
+function mapflat(f, arrs)
+    result = Vector{eltype(f.(arrs[1]))}(undef, sum(length, arrs))
+    k = 1
+    for arr in arrs, a in arr
+        result[k] = f(a)
+        k += 1
+    end
+    result
+end
+
+function twinx(ax; tickformat = k -> string(round(2pi / k, digits = 1)), kwargs...)
+    gc = ax.layoutobservables.gridcontent[]
+    ax2 = Axis(gc.parent[gc.span.rows, gc.span.cols];
+        xaxisposition = :top, xticks = ax.xticks,
+        xtickformat = ks -> tickformat.(ks),
+        kwargs...
+    )
+    hideydecorations!(ax2)
+    linkaxes!(ax, ax2)
+    ax2
+end
+
+iscanceled(fig) = ispressed(fig, Keyboard.escape)
+
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks
 
 end # module Utils
