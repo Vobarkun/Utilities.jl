@@ -58,6 +58,14 @@ function window(figlike, f = true)
     f && focus()
 end
 
+function wong_colors()
+    Makie.wong_colors() .* 1.5
+end
+
+function wong_colors(i)
+    wong_colors()[i]
+end
+
 function theme_dark()
     spinecolor = 1.1parse(Makie.RGB, "#4f5561")
     Theme(
@@ -73,7 +81,7 @@ function theme_dark()
             strokecolor = "#a8afbc",
             strokewidth = 1,
         ),
-        palette = (color = Makie.wong_colors() .* 1.5,),
+        palette = (color = wong_colors(),),
         Axis = (
             backgroundcolor = :transparent,
             bottomspinecolor = spinecolor,
@@ -83,10 +91,12 @@ function theme_dark()
             xgridcolor = "#383e49",
             xlabelpadding = 3,
             xminorticksvisible = false,
+            xminortickcolor = spinecolor,
             xticksvisible = false,
             ygridcolor = "#383e49",
             ylabelpadding = 3,
             yminorticksvisible = false,
+            yminortickcolor = spinecolor,
             yticksvisible = false,
         ),
         Axis3 = (
@@ -143,6 +153,20 @@ const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticks
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, ys) = scatter!(ax, xs, ys, color = :transparent)
+
+const Asinh = ReversibleScale(x -> asinh(2*sqrt(6)*x), x -> sinh(x)/(2*sqrt(6)))
+
+function integerscientific(ticks)
+    map(ticks) do t
+        if t == 0
+            rich("0")
+        else
+            exponent = floor(Int, log10(abs(t)))
+            significand = round(Int, t / exp10(exponent))
+            rich((t < 0 ? "-" : ""), string(significand), " ⋅ 10", superscript(string(exponent)))
+        end
+    end
+end
 
 struct PseudologTicks ticks end
 Makie.get_tickvalues(t::PseudologTicks, vmin, vmax) = Makie.pseudolog10.inverse.(Makie.get_tickvalues(t.ticks, Makie.pseudolog10(10vmin), Makie.pseudolog10(10vmax)))
