@@ -93,6 +93,8 @@ function theme_dark()
             xminorticksvisible = false,
             xminortickcolor = spinecolor,
             xticksvisible = false,
+            xtickcolor = spinecolor,
+            ytickcolor = spinecolor,
             ygridcolor = "#383e49",
             ylabelpadding = 3,
             yminorticksvisible = false,
@@ -153,6 +155,17 @@ const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticks
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, ys) = scatter!(ax, xs, ys, color = :transparent)
+
+function linkedAxisGrid(figlike, nx, ny; kwargs...)
+    axes = broadcast(1:nx, (1:ny)') do i, j
+        Axis(figlike[i,j]; kwargs...,
+            xticksvisible = (i == nx), xticklabelsvisible = (i == nx),
+            yticksvisible = (j == 1), yticklabelsvisible = (j == 1),
+        )
+    end
+    linkaxes!(axes...)
+    axes
+end
 
 const Asinh = ReversibleScale(x -> asinh(2*sqrt(6)*x), x -> sinh(x)/(2*sqrt(6)))
 
@@ -379,6 +392,6 @@ end
 
 iscanceled(fig) = ispressed(fig, Keyboard.escape)
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid
 
 end # module Utils
