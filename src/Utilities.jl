@@ -8,7 +8,7 @@ import REPL
 function addREPLCompletions()
     REPL.REPLCompletions.latex_symbols["\\fig"] = "fig = Figure(); ax = Axis(fig[1,1])";
     REPL.REPLCompletions.latex_symbols["\\figls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
-    REPL.REPLCompletions.latex_symbols["\\ls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
+    REPL.REPLCompletions.latex_symbols["\\ls"] = "fig = Figure(); ax = LScene(fig[1,1]; fixcam..., show_axis = false)";
     REPL.REPLCompletions.latex_symbols["\\angstrom"] = "Å";
 end
 
@@ -89,6 +89,7 @@ function theme_dark()
             rightspinecolor = spinecolor,
             topspinecolor = spinecolor,
             xgridcolor = "#383e49",
+            xminorgridcolor = ("#383e49", 0.5),
             xlabelpadding = 3,
             xminorticksvisible = false,
             xminortickcolor = spinecolor,
@@ -96,6 +97,7 @@ function theme_dark()
             xtickcolor = spinecolor,
             ytickcolor = spinecolor,
             ygridcolor = "#383e49",
+            yminorgridcolor = ("#383e49", 0.5),
             ylabelpadding = 3,
             yminorticksvisible = false,
             yminortickcolor = spinecolor,
@@ -154,13 +156,24 @@ const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticks
 
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
-include!(ax, ys) = scatter!(ax, xs, ys, color = :transparent)
+include!(ax, xs, ys) = scatter!(ax, xs, ys, color = :transparent)
+
+function subfigure(fig, i, j; label = :automatic, xoffset = 20, yoffset = 0, kwargs...)
+    sf = GridLayout(fig[i,j]);
+    l = label == :automatic ? string.('a':'z')[length(contents(fig[:,:]))] : label
+    Label(fig[i,j, TopLeft()], l;
+        tellwidth = false, halign = :left, 
+        padding = (xoffset, -xoffset, yoffset, -yoffset),
+        kwargs...
+    )
+    sf
+end
 
 function linkedAxisGrid(figlike, nx, ny; kwargs...)
-    axes = broadcast(1:nx, (1:ny)') do i, j
+    axes = broadcast((1:nx)', 1:ny) do i, j
         Axis(figlike[i,j]; kwargs...,
-            xticksvisible = (i == nx), xticklabelsvisible = (i == nx),
-            yticksvisible = (j == 1), yticklabelsvisible = (j == 1),
+            xticksvisible = (i == nx), xticklabelsvisible = (i == nx), xlabelvisible = (i == nx),
+            yticksvisible = (j == 1), yticklabelsvisible = (j == 1), ylabelvisible = (j == 1),
         )
     end
     linkaxes!(axes...)
@@ -240,7 +253,8 @@ end
 
 @recipe(MultiLines) do scene
     Attributes(
-        colormap = Reverse(:Set1_3),
+        colormap = cgrad(Makie.wong_colors()[1:2]),
+        colorrange = Makie.Automatic(),
         linewidth = 2,
         color = nothing
     )
@@ -275,11 +289,10 @@ function Makie.plot!(sc::MultiLines{<:Tuple{AbstractVector{<:Real}, AbstractVect
     Makie.Observables.onany(update_plot, xs, yss, cs)
 
     update_plot(xs[], yss[], cs[])
-
     if isnothing(cs[]) || isa(cs[], AbstractArray)
-        lines!(sc, points, color = colors, colormap = sc.colormap, linewidth = sc.linewidth)
+        lines!(sc, points, color = colors, colormap = sc.colormap, colorrange = sc.colorrange, linewidth = sc.linewidth)
     else
-        lines!(sc, points, color = sc.color, colormap = sc.colormap, linewidth = sc.linewidth)
+        lines!(sc, points, color = sc.color, colormap = sc.colormap, colorrange = sc.colorrange, linewidth = sc.linewidth)
     end
 
     sc
@@ -392,6 +405,6 @@ end
 
 iscanceled(fig) = ispressed(fig, Keyboard.escape)
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure
 
 end # module Utils
