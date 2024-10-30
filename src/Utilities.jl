@@ -7,7 +7,7 @@ import REPL
 
 function addREPLCompletions()
     REPL.REPLCompletions.latex_symbols["\\fig"] = "fig = Figure(); ax = Axis(fig[1,1])";
-    REPL.REPLCompletions.latex_symbols["\\figls"] = "fig = Figure(); ls = LScene(fig[1,1]; fixcam..., show_axis = false)";
+    REPL.REPLCompletions.latex_symbols["\\figls"] = "fig = Figure(); ax = LScene(fig[1,1]; fixcam..., show_axis = false)";
     REPL.REPLCompletions.latex_symbols["\\ls"] = "fig = Figure(); ax = LScene(fig[1,1]; fixcam..., show_axis = false)";
     REPL.REPLCompletions.latex_symbols["\\angstrom"] = "Å";
 end
@@ -141,7 +141,8 @@ function theme()
             isovalue = 1.0, 
             isorange = 0.9, 
             colorrange = (0, 2)
-        )
+        ),
+        Scatter = (fxaa = true, )
     )
 end
 set_theme!(t = :light; kwargs...) = Makie.set_theme!(t == :dark ? theme_dark() : theme(); kwargs...)
@@ -182,14 +183,16 @@ end
 
 const Asinh = ReversibleScale(x -> asinh(2*sqrt(6)*x), x -> sinh(x)/(2*sqrt(6)))
 
-function integerscientific(ticks)
-    map(ticks) do t
-        if t == 0
-            rich("0")
-        else
-            exponent = floor(Int, log10(abs(t)))
-            significand = round(Int, t / exp10(exponent))
-            rich((t < 0 ? "-" : ""), string(significand), " ⋅ 10", superscript(string(exponent)))
+function scientific(digits = 1)
+    function format(ticks)
+        map(ticks) do t
+            if t == 0
+                rich("0")
+            else
+                exponent = floor(Int, log10(abs(t)))
+                significand = digits == 0 ? round(Int, t / exp10(exponent)) : round(t / exp10(exponent), digits = digits)
+                rich((t < 0 ? "-" : ""), string(abs(significand)), " ⋅ 10", superscript(string(exponent)))
+            end
         end
     end
 end
@@ -405,6 +408,6 @@ end
 
 iscanceled(fig) = ispressed(fig, Keyboard.escape)
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific
 
 end # module Utils
