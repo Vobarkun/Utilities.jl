@@ -1,6 +1,6 @@
 module Utilities
 
-using Makie, IJulia
+using Makie, IJulia, JLD2
 import Makie.SpecApi as S
 
 import REPL
@@ -407,6 +407,12 @@ function twinx(ax; tickformat = k -> string(round(2pi / k, digits = 1)), kwargs.
 end
 
 iscanceled(fig) = ispressed(fig, Keyboard.escape)
+
+function cmap(name)
+    jldopen(normpath(joinpath(@__DIR__, "..", "data/cmaps.jld2"))) do f
+        f[string(name)]
+    end
+end
 
 export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific
 
