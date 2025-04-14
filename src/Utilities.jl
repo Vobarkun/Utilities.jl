@@ -159,6 +159,22 @@ xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, xs, ys) = scatter!(ax, xs, ys, color = :transparent)
 
+function ensurelogticks!(ax)
+    (xmin, xmax), (ymin, ymax) = map((1, 2)) do i
+        mapreduce(((x1, y1), (x2, y2)) -> (min(x1, x2), max(y1, y2)), ax.scene.plots) do plt
+            extrema(getindex.(plt[1][], i))
+        end
+    end
+    xmin -= 0.001xmin
+    ymin -= 0.001ymin
+    if ax.xscale[] == log10 && floor(log10(xmax)) - ceil(log10(xmin)) <= 0
+        xinc!(ax, exp10(floor(Int, log10(xmin))), exp10(ceil(Int, log10(xmax))))
+    end
+    if ax.yscale[] == log10 && floor(log10(ymax)) - ceil(log10(ymin)) <= 0
+        yinc!(ax, exp10(floor(Int, log10(ymin))), exp10(ceil(Int, log10(ymax))))
+    end
+end
+
 function subfigure(fig, i, j; label = :automatic, xoffset = 20, yoffset = 0, kwargs...)
     sf = GridLayout(fig[i,j]);
     l = label == :automatic ? string.('a':'z')[length(contents(fig[:,:]))] : label
@@ -170,16 +186,21 @@ function subfigure(fig, i, j; label = :automatic, xoffset = 20, yoffset = 0, kwa
     sf
 end
 
-function linkedAxisGrid(figlike, nx, ny; kwargs...)
+function linkedAxisGrid(func, figlike, nx, ny; kwargs...)
     axes = broadcast((1:nx)', 1:ny) do i, j
-        Axis(figlike[i,j]; kwargs...,
+        ax = Axis(figlike[i,j]; kwargs...,
             xticksvisible = (i == nx), xticklabelsvisible = (i == nx), xlabelvisible = (i == nx),
             yticksvisible = (j == 1), yticklabelsvisible = (j == 1), ylabelvisible = (j == 1),
         )
+        func(ax, i, j)
+        # figlike[i,j] = ax
+        ax
     end
     linkaxes!(axes...)
     axes
 end
+
+linkedAxisGrid(figlike, nx, ny; kwargs...) = linkedAxisGrid((ax, i, j) -> nothing, figlike, nx, ny; kwargs...)
 
 const Asinh = ReversibleScale(x -> asinh(2*sqrt(6)*x), x -> sinh(x)/(2*sqrt(6)))
 
@@ -394,7 +415,7 @@ function mapflat(f, arrs)
     result
 end
 
-function twinx(ax; tickformat = k -> string(round(2pi / k, digits = 1)), kwargs...)
+function twinx(ax; tickformat = k -> (k != 0) ? string(round(2pi / k, digits = 1)) : "∞", kwargs...)
     gc = ax.layoutobservables.gridcontent[]
     ax2 = Axis(gc.parent[gc.span.rows, gc.span.cols];
         xaxisposition = :top, xticks = ax.xticks,
@@ -414,6 +435,6 @@ function cmap(name)
     end
 end
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific, ensurelogticks!
 
 end # module Utils
