@@ -70,7 +70,7 @@ function theme_dark()
     spinecolor = 1.1parse(Makie.RGB, "#4f5561")
     Theme(
         size = (1000,1000), 
-        backgroundcolor = "#282c34",
+        backgroundcolor = :transparent,
         linecolor = "#a8afbc",
         textcolor = "#a8afbc",
         Hist = (
@@ -130,6 +130,9 @@ function theme_dark()
             isorange = 0.9, 
             colorrange = (0, 2)
         ),
+        Mesh = (
+            cycle = [:color => :color],
+        ),
     )
 end
 
@@ -138,9 +141,12 @@ function theme()
         size = (1000,1000), 
         Volume = (
             algorithm = :iso, 
-            isovalue = 1.0, 
-            isorange = 0.9, 
+            isovalue = 1.0,
+            isorange = 0.9,
             colorrange = (0, 2)
+        ),
+        Mesh = (
+            cycle = [:color => :color],
         ),
         Scatter = (fxaa = true, )
     )
@@ -151,13 +157,14 @@ cam3dfixed!(scene; kwargs...) = cam3d!(scene; zoom_shift_lookat = false, kwargs.
 const fixcam = (scenekw = (camera = cam3dfixed!,),)
 
 struct IntervalTicks step end
-Makie.get_tickvalues(t::IntervalTicks, vmin, vmax) = ceil(Int, vmin / t.step) * t.step : t.step : floor(Int, vmax / t.step) * t.step
+Makie.get_tickvalues(t::IntervalTicks, vmin, vmax) = (floor(Int, vmin / t.step) - 1) * t.step : t.step : (ceil(Int, vmax / t.step) + 1) * t.step
 const xlog10 = (xscale = log10, xticks = LogTicks(IntervalTicks(1)), xminorticksvisible=true, xminorticks = IntervalsBetween(9))
 const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticksvisible=true, yminorticks = IntervalsBetween(9))
 
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
 include!(ax, xs, ys) = scatter!(ax, xs, ys, color = :transparent)
+include!(ax, ps) = scatter!(ax, ps, color = :transparent)
 
 function ensurelogticks!(ax)
     (xmin, xmax), (ymin, ymax) = map((1, 2)) do i
@@ -371,37 +378,30 @@ end
 
 function linkCams!(scenes)
     for scene in scenes[1:end]
-        scene.camera = copy(scenes[1].camera)
         on(scene.camera_controls.eyeposition) do ep
             for scene2 in scenes
                 scene2.camera_controls.eyeposition.val = ep
+                update_cam!(scene2)
             end
         end
         on(scene.camera_controls.lookat) do ep
             for scene2 in scenes
                 scene2.camera_controls.lookat.val = ep
+                update_cam!(scene2)
             end
         end
         on(scene.camera_controls.upvector) do ep
             for scene2 in scenes
                 scene2.camera_controls.upvector.val = ep
+                update_cam!(scene2)
             end
         end
         on(scene.camera_controls.fov) do ep
             for scene2 in scenes
                 scene2.camera_controls.fov.val = ep
+                update_cam!(scene2)
             end
         end
-        # on(scene.camera_controls.zoom_mult) do ep
-        #     for scene2 in scenes
-        #         scene2.camera_controls.zoom_mult.val = ep
-        #     end
-        # end
-        # on(scene.lights[1].position) do ep
-        #     for scene2 in scenes
-        #         scene2.lights[1].position.val = ep
-        #     end
-        # end
     end
 end
 
@@ -429,12 +429,61 @@ end
 
 iscanceled(fig) = ispressed(fig, Keyboard.escape)
 
+function posFig(ax, points::AbstractArray{<:AbstractArray})
+    lift(ax.scene.viewport, ax.layoutobservables.computedbbox, ax.scene.camera.projectionview) do px_area, bbox, _
+		Makie.project.(ax.scene, Point2f.(points)) .+ (px_area.origin,)
+	end
+end
+function posFig(ax, x, y)
+    lift(ax.scene.viewport, ax.layoutobservables.computedbbox, ax.scene.camera.projectionview) do px_area, bbox, _
+		Makie.project(ax.scene, Point2f(x, y)) + px_area.origin
+	end
+end
+posFig(ax, xy) = posFig(ax, xy...)
+
 function cmap(name)
     jldopen(normpath(joinpath(@__DIR__, "..", "data/cmaps.jld2"))) do f
         f[string(name)]
     end
 end
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific, ensurelogticks!
+function padmaxlength(s)
+    maxl = maximum(length, s)
+    rpad.(s, maxl)
+end
+
+function fieldinfo(s)
+    fields = fieldnames(typeof(s))
+    types = typeof.(getfield.((s,), fields))
+    sizes = map(fields) do f
+        try 
+            return size(getfield(s, f))
+        catch e
+            return ""
+        end
+    end
+    
+    fieldstrings = padmaxlength(string.(fields))
+    typestrings = padmaxlength(string.(types))
+    typestrings = [t[1:min(50, end)] for t in typestrings]
+    sizestrings = padmaxlength(string.(sizes))
+
+    for t in zip(fieldstrings, typestrings, sizestrings)
+        for x in t
+            print(x, "  ")
+        end
+        println()
+    end
+end
+
+macro runtostr(expr)
+    s = join(filter(x -> !occursin("#=", x), split(string(expr), "\n")), "\n")
+    return esc(quote
+        $expr
+        $s
+    end)
+end
+
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific, ensurelogticks!, fieldinfo, @runtostr, posFig
 
 end # module Utils
