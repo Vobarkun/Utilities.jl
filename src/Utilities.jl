@@ -441,6 +441,26 @@ function posFig(ax, x, y)
 end
 posFig(ax, xy) = posFig(ax, xy...)
 
+function collect_labeled_plots(figlike, unique = true, sortbytype = true)
+    x = map(filter(x -> isa(x, Axis), contents(figlike))) do ax
+        Makie.get_labeled_plots(ax, merge = false, unique = false)
+    end
+    plots_in_fig = reduce(vcat, first.(x))
+    labels_in_fig = reduce(vcat, last.(x))
+    if !unique
+        return plots_in_fig, labels_in_fig
+    end
+    ulabels = Base.unique(labels_in_fig)
+    uplots = [plots_in_fig[findfirst(isequal(l), labels_in_fig)] for l in ulabels]
+
+    if sortbytype
+        perm = sortperm(uplots, by = string ∘ typeof)
+        ulabels = ulabels[perm]; uplots = uplots[perm]
+    end
+
+    uplots, ulabels
+end
+
 function cmap(name)
     if name == :wong12
         return cgrad(Makie.wong_colors()[1:2])
