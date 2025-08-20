@@ -182,13 +182,13 @@ function ensurelogticks!(ax)
     end
 end
 
-function subfigure(fig, i, j; label = :automatic, xoffset = 20, yoffset = 0, kwargs...)
+function subfigure(fig, i, j; font = :bold, label = :automatic, xoffset = 20, yoffset = 0, kwargs...)
     sf = GridLayout(fig[i,j]);
     l = label == :automatic ? string.('a':'z')[length(contents(fig[:,:]))] : label
     Label(fig[i,j, TopLeft()], l;
         tellwidth = false, halign = :left, 
         padding = (xoffset, -xoffset, yoffset, -yoffset),
-        kwargs...
+        font, kwargs...
     )
     sf
 end
@@ -442,6 +442,9 @@ end
 posFig(ax, xy) = posFig(ax, xy...)
 
 function cmap(name)
+    if name == :wong12
+        return cgrad(Makie.wong_colors()[1:2])
+    end
     jldopen(normpath(joinpath(@__DIR__, "..", "data/cmaps.jld2"))) do f
         f[string(name)]
     end
