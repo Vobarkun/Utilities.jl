@@ -445,7 +445,7 @@ function cmap(name)
     if name == :wong12
         return cgrad(Makie.wong_colors()[1:2])
     elseif name == :darkisoluminant
-        return cgrad([HSV(x.h, 1.5x.s, 0.9x.v) for x in HSV.(cgrad(:isoluminant_cm_70_c39_n256))])
+        return cgrad([Makie.HSV(x.h, 1.5x.s, 0.9x.v) for x in Makie.HSV.(cgrad(:isoluminant_cm_70_c39_n256))])
     end
     jldopen(normpath(joinpath(@__DIR__, "..", "data/cmaps.jld2"))) do f
         cgrad(f[string(name)])
