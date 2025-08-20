@@ -448,7 +448,7 @@ function cmap(name)
         cgrad([HSV(x.h, 1.5x.s, 0.9x.v) for x in HSV.(cgrad(:isoluminant_cm_70_c39_n256))])
     end
     jldopen(normpath(joinpath(@__DIR__, "..", "data/cmaps.jld2"))) do f
-        f[string(name)]
+        cgrad(f[string(name)])
     end
 end
 
