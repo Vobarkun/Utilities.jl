@@ -510,6 +510,6 @@ macro runtostr(expr)
     end)
 end
 
-export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific, ensurelogticks!, fieldinfo, @runtostr, posFig
+export window, IntervalTicks, xlog10, ylog10, xinc!, yinc!, include!, liftevery, linkCameras!, focus, easein, numpath, smoothstep, fixcam, cam3dfixed!, addREPLCompletions, mapflat, twinx, iscanceled, Pseudolog10Ticks, linkedAxisGrid, subfigure, scientific, ensurelogticks!, fieldinfo, @runtostr, posFig, xasinh, yasinh
 
 end # module Utils
