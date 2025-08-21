@@ -158,8 +158,6 @@ const fixcam = (scenekw = (camera = cam3dfixed!,),)
 
 struct IntervalTicks step end
 Makie.get_tickvalues(t::IntervalTicks, vmin, vmax) = (floor(Int, vmin / t.step) - 1) * t.step : t.step : (ceil(Int, vmax / t.step) + 1) * t.step
-const xlog10 = (xscale = log10, xticks = LogTicks(IntervalTicks(1)), xminorticksvisible=true, xminorticks = IntervalsBetween(9))
-const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticksvisible=true, yminorticks = IntervalsBetween(9))
 
 xinc!(ax, xs...) = vlines!(ax, collect(xs), color = :transparent)
 yinc!(ax, ys...) = hlines!(ax, collect(ys), color = :transparent)
@@ -209,8 +207,6 @@ end
 
 linkedAxisGrid(figlike, nx, ny; kwargs...) = linkedAxisGrid((ax, i, j) -> nothing, figlike, nx, ny; kwargs...)
 
-const Asinh = ReversibleScale(x -> asinh(2*sqrt(6)*x), x -> sinh(x)/(2*sqrt(6)))
-
 function scientific(digits = 1)
     function format(ticks)
         map(ticks) do t
@@ -252,6 +248,11 @@ function Makie.get_ticks(t::Pseudolog10Ticks, scale, tickformat, vmin, vmax)
     ticklabels = Makie.get_ticklabels(t, ticks)
     ticks, ticklabels    
 end
+
+const xlog10 = (xscale = log10, xticks = LogTicks(IntervalTicks(1)), xminorticksvisible=true, xminorticks = IntervalsBetween(9))
+const ylog10 = (yscale = log10, yticks = LogTicks(IntervalTicks(1)), yminorticksvisible=true, yminorticks = IntervalsBetween(9))
+const xasinh = (xscale = Makie.AsinhScale(1), xticks = Pseudolog10Ticks(), xminorticksvisible = true, xminorticks = IntervalsBetween(9))
+const yasinh = (yscale = Makie.AsinhScale(1), yticks = Pseudolog10Ticks(), yminorticksvisible = true, yminorticks = IntervalsBetween(9))
 
 function calculate_rgba(rgb1, rgb2, rgba_bg)::RGBAf
     rgb1 == rgb2 && return RGBAf(rgb1.r, rgb1.g, rgb1.b, 1)
